@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Visor — Citas, Suplidores & Reportes</title>
+<meta name="theme-color" content="#0f0f12">
+<style>
+:root{
+ --bg:#0f0f12; --fg:#ffffff; --muted:#a7a7b1;
+ --primary:#6ee7b7; --accent:#93c5fd; --danger:#ef4444; --warn:#f59e0b;
+ --card:#171821; --card-2:#1e202b; --topbar:#11121a; --footer:#0c0d12;
+ --btn:#24263a; --outline:#2a2d40; --shadow:0 10px 30px rgba(0,0,0,.35);
+ --radius:16px; --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Inter, Roboto, "Helvetica Neue", Arial;
+ --bg-opacity:1;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+ margin:0; background: rgba(15,15,18,var(--bg-opacity));
+ color:var(--fg); font-family:var(--font); -webkit-font-smoothing:antialiased;
+ background-image: var(--bg-image, none); background-size: cover; background-position:center; background-attachment:fixed;
+}
+a{color:inherit; text-decoration:none}
+button{cursor:pointer; border:0; background:var(--btn); color:#fff; border-radius:12px; padding:.7rem .95rem; box-shadow:var(--shadow); transition:.15s}
+button:hover{transform:translateY(-1px)}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent))}
+.btn-danger{background:linear-gradient(135deg,var(--danger),#b91c1c)}
+.btn-ghost{background:transparent; border:1px solid var(--outline)}
+.input, select, textarea{
+ width:100%; padding:.74rem .9rem; background:#11131a; color:#fff; border:1px solid var(--outline);
+ border-radius:12px; outline:none; transition:border-color .15s ease, box-shadow .15s ease
+}
+.input:focus, select:focus, textarea:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(147,197,253,.25)}
+label{display:block; font-size:.9rem; color:var(--muted); margin:.1rem 0 .35rem}
+.card{
+ background: linear-gradient(180deg, var(--card), var(--card-2));
+ border:1px solid var(--outline); border-radius: var(--radius);
+ box-shadow: var(--shadow); padding:1rem;
+}
+.row{display:grid; gap:1rem}
+.row.cols-2{grid-template-columns:1fr 1fr}
+.row.cols-3{grid-template-columns:repeat(3,1fr)}
+.row.cols-4{grid-template-columns:repeat(4,1fr)}
+@media (max-width:980px){ .row.cols-2,.row.cols-3,.row.cols-4{grid-template-columns:1fr} }
+.table{width:100%; border-collapse:separate; border-spacing:0 10px}
+.table th, .table td{padding:.7rem .9rem; text-align:left}
+.table thead th{color:#cdd4ff; font-weight:600; font-size:.9rem}
+.tr{background: linear-gradient(180deg,#141726,#0f1220); border:1px solid var(--outline); border-radius:12px}
+.tr td:first-child,.tr th:first-child{border-top-left-radius:12px; border-bottom-left-radius:12px}
+.tr td:last-child,.tr th:last-child{border-top-right-radius:12px; border-bottom-right-radius:12px}
+.badge{display:inline-flex; align-items:center; gap:.4rem; padding:.25rem .6rem; background:#101323; border:1px solid var(--outline); border-radius:999px; font-size:.78rem; color:#c7d2fe}
+.topbar{
+ position:sticky; top:0; z-index:50;
+ background: linear-gradient(180deg,var(--topbar), rgba(17,18,26,.85));
+ backdrop-filter: blur(8px); border-bottom:1px solid var(--outline);
+}
+.topbar-inner{display:flex; align-items:center; gap:.9rem; padding:.8rem 1rem}
+.brand{display:flex; align-items:center; gap:.7rem}
+.brand img{width:36px; height:36px; border-radius:10px; object-fit:cover; border:1px solid var(--outline)}
+.brand .title{font-weight:800; letter-spacing:.2px}
+.top-actions{margin-left:auto; display:flex; gap:.5rem; align-items:center}
+.container{max-width:1160px; margin:1.2rem auto; padding:0 1rem 3rem}
+.tabs{display:flex; gap:.5rem; flex-wrap:wrap; margin:1rem 0}
+.tab{padding:.55rem .9rem; border:1px solid var(--outline); border-radius:10px; background:#0f1322; color:#c9d2ff}
+.tab.active{background:linear-gradient(135deg,var(--primary),var(--accent)); color:#000; border-color:transparent}
+.section{display:none}
+.section.active{display:block; animation:fade .18s ease}
+.center{text-align:center}
+.small{font-size:.85rem}
+.help{color:#a9b2dc; font-size:.85rem}
+.right{margin-left:auto}
+.preview{width:100%; max-height:220px; object-fit:contain; background:#0b0e1a; border:1px dashed var(--outline); border-radius:12px; padding:.6rem}
+.hidden{display:none !important}
+hr.sep{border:0; height:1px; background:linear-gradient(90deg, transparent, #28304a, transparent); margin:1rem 0}
+.footer{margin-top:2rem; padding:1rem; text-align:center; color:#9aa3c7; border-top:1px solid var(--outline); background:var(--footer)}
+@media print{ .topbar, .tabs, .footer, .no-print{display:none !important} .card, .tr{box-shadow:none; border:1px solid #ddd} body{background:white !important; color:black !important} }
+</style>
+</head>
+<body>
+<header class="topbar">
+ <div class="topbar-inner">
+   <div class="brand">
+     <img id="brandLogo" alt="logo">
+     <div>
+       <div class="title" id="brandName">Salon Pro</div>
+       <div class="small" id="brandSub">Visor</div>
+     </div>
+   </div>
+   <div class="top-actions">
+     <button class="btn-ghost" id="btnPrint">Imprimir</button>
+   </div>
+ </div>
+</header>
+
+<main class="container">
+ <!-- pestañas -->
+ <div class="tabs no-print">
+   <button class="tab active" data-tab="sec-citas">Citas</button>
+   <button class="tab" data-tab="sec-suplidores">Suplidores</button>
+   <button class="tab" data-tab="sec-reportes">Reportes Facturación</button>
+   <button class="tab" data-tab="sec-config">Config Marca</button>
+   <button class="tab" data-tab="sec-backup">Backup/Restore</button>
+ </div>
+
+ <!-- CITAS -->
+ <section id="sec-citas" class="section active">
+   <div class="card">
+     <div class="row cols-4">
+       <div><label>Cliente</label><input id="vc_nombre" class="input" placeholder="Buscar por nombre"></div>
+       <div><label>Técnica/Empleado</label><select id="vc_emp" class="input"></select></div>
+       <div><label>Desde</label><input id="vc_desde" type="date" class="input"></div>
+       <div><label>Hasta</label><input id="vc_hasta" type="date" class="input"></div>
+     </div>
+     <div class="row" style="margin-top:.6rem">
+       <div class="right">
+         <button id="vc_aplicar" class="btn-ghost">Aplicar</button>
+         <button id="vc_limpiar" class="btn-ghost">Limpiar</button>
+         <button id="vc_csv" class="btn-ghost no-print">Exportar CSV</button>
+         <button id="vc_pdf" class="btn-ghost no-print">Exportar PDF</button>
+         <button id="vc_wa_bulk" class="btn-primary no-print">WhatsApp masivo</button>
+       </div>
+     </div>
+   </div>
+
+   <div class="card" style="margin-top:1rem">
+     <div class="toolbar"><b>Resultados</b></div>
+     <table class="table" id="tblVisor">
+       <thead>
+         <tr class="tr">
+           <th>Fecha</th><th>Hora</th><th>Cliente</th><th>Técnica</th><th>Servicio</th><th>Tel</th><th class="no-print">Acciones</th>
+         </tr>
+       </thead>
+       <tbody></tbody>
+     </table>
+   </div>
+ </section>
+
+ <!-- SUPLIDORES -->
+ <section id="sec-suplidores" class="section">
+   <div class="card">
+     <div class="row cols-4">
+       <div><label>Suplidor</label><input id="sup_prov" class="input" placeholder="Nombre del suplidor"></div>
+       <div><label># Documento</label><input id="sup_doc" class="input" placeholder="Factura / NCF / Ref."></div>
+       <div><label>Fecha</label><input id="sup_fecha" type="date" class="input"></div>
+       <div>
+         <label>Método</label>
+         <select id="sup_metodo" class="input">
+           <option>Efectivo</option><option>Tarjeta</option><option>Transferencia</option><option>Otro</option>
+         </select>
+       </div>
+     </div>
+     <div class="row cols-3" style="margin-top:.6rem">
+       <div><label>Monto</label><input id="sup_monto" type="number" step=".01" class="input" placeholder="0.00"></div>
+       <div><label>Notas</label><input id="sup_notas" class="input" placeholder="Opcional"></div>
+       <div style="display:flex;align-items:end"><button id="sup_add" class="btn-primary">Guardar compra</button></div>
+     </div>
+   </div>
+
+   <div class="card" style="margin-top:1rem">
+     <div class="row">
+       <b>Compras registradas</b>
+       <span class="right">
+         <button id="sup_csv" class="btn-ghost">Exportar CSV</button>
+         <button id="sup_pdf" class="btn-ghost">Exportar PDF</button>
+       </span>
+     </div>
+     <table class="table" id="tblSup">
+       <thead><tr class="tr"><th>Fecha</th><th>Suplidor</th><th>Documento</th><th>Método</th><th>Monto</th><th>Notas</th><th class="no-print">Acciones</th></tr></thead>
+       <tbody></tbody>
+     </table>
+     <hr class="sep">
+     <div><b>Total:</b> <span id="sup_total">$0.00</span></div>
+   </div>
+ </section>
+
+ <!-- REPORTES FACTURACIÓN -->
+ <section id="sec-reportes" class="section">
+   <div class="card">
+     <div class="row cols-4">
+       <div><label>Técnica/Empleado</label><select id="rf_emp" class="input"></select></div>
+       <div><label>Desde</label><input id="rf_desde" type="date" class="input"></div>
+       <div><label>Hasta</label><input id="rf_hasta" type="date" class="input"></div>
+       <div style="display:flex;align-items:end;gap:.5rem">
+         <button id="rf_pdf_ventas" class="btn-ghost">PDF Ventas por técnica</button>
+         <button id="rf_pdf_propinas" class="btn-ghost">PDF Propinas por técnica</button>
+       </div>
+     </div>
+     <div class="small help">Fuente: <code>sp_facturas</code> de Salon Pro. Las <b>propinas</b> se leen de <code>notas</code> (primera cantidad encontrada).</div>
+   </div>
+
+   <div class="card" style="margin-top:1rem">
+     <b>Vista previa (facturas filtradas)</b>
+     <table class="table" id="tblFactPreview">
+       <thead>
+         <tr class="tr">
+           <th>#</th><th>Fecha</th><th>Cliente</th><th>Técnica</th><th>Método</th><th>Subtotal</th><th>IVU</th><th>Total</th><th>Propina (notas)</th>
+         </tr>
+       </thead>
+       <tbody></tbody>
+     </table>
+     <hr class="sep">
+     <div class="row cols-4">
+       <div><b>Subtotal:</b> <span id="rf_sub">$0.00</span></div>
+       <div><b>IVU:</b> <span id="rf_tax">$0.00</span></div>
+       <div><b>Total general:</b> <span id="rf_tot">$0.00</span></div>
+       <div><b>Total propinas:</b> <span id="rf_tips">$0.00</span></div>
+     </div>
+   </div>
+ </section>
+
+ <!-- CONFIG -->
+ <section id="sec-config" class="section">
+   <div class="card">
+     <div class="row cols-4">
+       <div><label>Nombre del negocio</label><input id="cfg_name" class="input" placeholder="Salon Pro"></div>
+       <div><label>Subtítulo</label><input id="cfg_sub" class="input" placeholder="Visor"></div>
+       <div><label>Logo</label><input id="cfg_logo" type="file" accept="image/*" class="input"></div>
+       <div><label>Previsualización</label><img id="cfg_logo_prev" class="preview" alt="Logo"></div>
+     </div>
+     <div class="row cols-4" style="margin-top:.6rem">
+       <div><label>Fondo (imagen)</label><input id="cfg_bg" type="file" accept="image/*" class="input"></div>
+       <div><label>Opacidad de fondo (0.6 a 1)</label><input id="cfg_bg_op" type="number" step=".05" min="0.6" max="1" value="1" class="input"></div>
+       <div><label>Color primario</label><input id="cfg_primary" type="color" class="input" value="#6ee7b7"></div>
+       <div><label>Color acento</label><input id="cfg_accent" type="color" class="input" value="#93c5fd"></div>
+     </div>
+   </div>
+ </section>
+
+ <!-- BACKUP -->
+ <section id="sec-backup" class="section">
+   <div class="card">
+     <div class="row cols-2">
+       <div>
+         <b>Backup</b>
+         <p class="help">Exporta Config, Empleados, Citas, Suplidores y Facturas actuales a un JSON.</p>
+         <button id="bk_export" class="btn-ghost">Exportar backup</button>
+       </div>
+       <div>
+         <b>Restaurar</b>
+         <p class="help">Importa un backup previamente exportado (JSON).</p>
+         <input id="bk_import" type="file" accept="application/json" class="input">
+       </div>
+     </div>
+   </div>
+ </section>
+</main>
+
+<footer class="footer">
+ <div>© <span id="year"></span> <span id="footerName">Salon Pro</span> — Visor</div>
+</footer>
+
+<!-- MODAL WHATSAPP MASIVO -->
+<div id="waModal" class="card hidden" style="position:fixed; right:12px; bottom:12px; max-width:420px; z-index:60">
+ <div class="row">
+   <b>WhatsApp masivo</b>
+   <button id="waClose" class="btn-ghost right">Cerrar</button>
+ </div>
+ <div class="small help">Haz clic en cada enlace para abrir WhatsApp con el mensaje prellenado.</div>
+ <div id="waLinks" style="margin-top:.6rem; max-height:300px; overflow:auto"></div>
+</div>
+
+<script>
+/* =========================
+ Base / Claves compartidas con Salon Pro
+ ========================= */
+const K={
+ USERS:'sp_users', SESSION:'sp_session',
+ EMP:'sp_empleados', CITAS:'sp_citas', FACTS:'sp_facturas',
+ CFG:'sp_config', SVC:'sp_servicios',
+ COUNTER_F:'sp_fact_counter',
+ SUP:'sp_suplidores' // propio del visor
+};
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const byId = id => document.getElementById(id);
+const fmtMoney = n => (Number(n||0)).toLocaleString('es-PR',{style:'currency',currency:'USD'});
+const todayISO = ()=> new Date().toISOString().slice(0,10);
+const uuid = ()=> crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36)+Math.random().toString(36).slice(2));
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const load=(k,d=null)=>JSON.parse(localStorage.getItem(k)||JSON.stringify(d));
+const download=(filename, content, type='text/plain')=>{
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(new Blob([content],{type}));
+ a.download=filename; a.click(); URL.revokeObjectURL(a.href);
+};
+
+/* Defaults mínimos para que no falle si se abre solo */
+(function ensureDefaults(){
+ if(!load(K.CFG)) save(K.CFG,{
+   name:'Salon Pro', sub:'Visor',
+   primary:'#6ee7b7', accent:'#93c5fd', bgOpacity:1,
+   logo:null, bg:null,
+   waPhone:'17870000000', waFacto:'Gracias por su visita. Detalle:',
+   maps:''
+ });
+ if(!load(K.EMP)) save(K.EMP,[
+   {id:uuid(), nombre:'Cynthia', tel:'', activo:1},
+   {id:uuid(), nombre:'María', tel:'', activo:1}
+ ]);
+ if(!load(K.CITAS)) save(K.CITAS,[]);
+ if(!load(K.SUP)) save(K.SUP,[]);
+ if(!load(K.FACTS)) save(K.FACTS,[]);
+})();
+
+/* =============== BRAND / TEMA =============== */
+function applyBrand(){
+ const cfg=load(K.CFG,{});
+ byId('brandName').textContent = cfg.name||'Salon Pro';
+ byId('brandSub').textContent  = 'Visor';
+ byId('footerName').textContent= cfg.name||'Salon Pro';
+ byId('year').textContent = new Date().getFullYear();
+ document.documentElement.style.setProperty('--primary', cfg.primary||'#6ee7b7');
+ document.documentElement.style.setProperty('--accent',  cfg.accent ||'#93c5fd');
+ document.documentElement.style.setProperty('--bg-opacity', cfg.bgOpacity ?? 1);
+ if(cfg.bg){ document.body.style.setProperty('--bg-image', `url('${cfg.bg}')`); }
+ else { document.body.style.removeProperty('--bg-image'); }
+ const logoTargets=['brandLogo','cfg_logo_prev'];
+ logoTargets.forEach(id=>{
+   const el=byId(id); if(!el) return;
+   if(cfg.logo){ el.src = cfg.logo; } else { el.removeAttribute('src'); }
+ });
+
+ // Cargar inputs del panel config
+ byId('cfg_name').value = cfg.name||'';
+ byId('cfg_sub').value  = 'Visor';
+ byId('cfg_primary').value = cfg.primary||'#6ee7b7';
+ byId('cfg_accent').value  = cfg.accent||'#93c5fd';
+ byId('cfg_bg_op').value   = cfg.bgOpacity??1;
+}
+
+/* =============== UI BÁSICA =============== */
+function switchTab(id){
+ $$('.tab').forEach(b=> b.classList.toggle('active', b.dataset.tab===id));
+ $$('.section').forEach(s=> s.classList.toggle('active', s.id===id));
+}
+
+/* =============== EMPLEADOS (para selects) =============== */
+function renderEmpSelect(selectIdList=['vc_emp','rf_emp']){
+ const emps=load(K.EMP,[]);
+ const onlyActive = e => (e.activo===undefined ? true : +e.activo===1);
+ const nameOf = e => e?.nombre || e?.name || '(sin nombre)';
+ selectIdList.forEach(id=>{
+   const sel = byId(id); if(!sel) return;
+   sel.innerHTML = `<option value="">Todos</option>` +
+     emps.filter(onlyActive).map(e=>`<option value="${e.id}">${nameOf(e)}</option>`).join('');
+ });
+}
+function empName(id){
+ const e=(load(K.EMP,[]).find(x=>x.id===id)||{});
+ return e.nombre||'—';
+}
+
+/* =============== CITAS =============== */
+function citasFiltradas(){
+ const nombre = (byId('vc_nombre').value||'').trim().toLowerCase();
+ const emp = byId('vc_emp').value;
+ const d = byId('vc_desde').value;
+ const h = byId('vc_hasta').value;
+ let arr = load(K.CITAS,[]);
+ if(nombre) arr = arr.filter(c => (c.nombre||'').toLowerCase().includes(nombre));
+ if(emp) arr = arr.filter(c => c.emp===emp);
+ if(d) arr = arr.filter(c => c.fecha>=d);
+ if(h) arr = arr.filter(c => c.fecha<=h);
+ arr.sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora));
+ return arr;
+}
+function renderCitas(){
+ const tb=byId('tblVisor').querySelector('tbody');
+ const rows = citasFiltradas();
+ tb.innerHTML = rows.map(c=>`
+   <tr class="tr">
+     <td>${c.fecha||''}</td>
+     <td>${c.hora||''}</td>
+     <td>${c.nombre||''}</td>
+     <td>${empName(c.emp)}</td>
+     <td>${c.srv||''}</td>
+     <td>${c.tel||''}</td>
+     <td class="no-print">
+       <button class="btn-ghost" onclick="citaWA('${c.id}')">WA</button>
+     </td>
+   </tr>
+ `).join('');
+}
+function citaWA(id){
+ const cfg=load(K.CFG,{});
+ const c=load(K.CITAS,[]).find(x=>x.id===id); if(!c) return;
+ const fechaTxt=new Date((c.fecha||todayISO())+'T'+(c.hora||'00:00')).toLocaleString('es-PR');
+ const msg = encodeURIComponent(
+   `Hola ${c.nombre||''}, confirmación de su cita:\n`+
+   `🗓 ${fechaTxt}\n👤 Técnica: ${empName(c.emp)}\n💈 Servicio: ${c.srv||'-'}\n`+
+   `${c.notas? '📝 Notas: '+c.notas+'\n':''}`+
+   `${(load(K.CFG,{}).maps||'')? '📍 Ubicación: '+load(K.CFG,{}).maps+'\n':''}`+
+   `¡Gracias!`
+ );
+ const phone = (c.tel || cfg.waPhone || '').replace(/\D/g,'');
+ if(!phone){ alert('No hay teléfono válido.'); return; }
+ window.open(`https://wa.me/${phone}?text=${msg}`,'_blank');
+}
+function visorCSV(){
+ const rows=citasFiltradas();
+ let csv='Fecha,Hora,Cliente,Técnica,Servicio,Tel\n';
+ rows.forEach(c=>{
+   csv+=`${c.fecha||''},${c.hora||''},"${(c.nombre||'').replace(/"/g,'""')}",`+
+        `"${empName(c.emp)}","${(c.srv||'').replace(/"/g,'""')}",${c.tel||''}\n`;
+ });
+ download(`CITAS_${todayISO()}.csv`, csv, 'text/csv');
+}
+function visorPDF(){
+ const rows=citasFiltradas();
+ const html=`
+<html><head><meta charset="utf-8"><title>Citas</title>
+<style>
+body{font-family:${getComputedStyle(document.documentElement).getPropertyValue('--font')}; padding:20px}
+table{width:100%; border-collapse:collapse; margin-top:10px}
+th,td{border:1px solid #ddd; padding:6px}
+h2,h3{margin:0}
+</style></head><body>
+<h2>${(load(K.CFG,{}).name)||'Salon Pro'} — Citas</h2>
+<table><thead><tr>
+ <th>Fecha</th><th>Hora</th><th>Cliente</th><th>Técnica</th><th>Servicio</th><th>Tel</th>
+</tr></thead><tbody>
+  ${rows.map(c=>`<tr>
+    <td>${c.fecha||''}</td><td>${c.hora||''}</td><td>${c.nombre||''}</td>
+    <td>${empName(c.emp)}</td><td>${c.srv||''}</td><td>${c.tel||''}</td>
+  </tr>`).join('')}
+</tbody></table>
+<h3>Total de citas: ${rows.length}</h3>
+</body></html>`;
+ const w=window.open('','_blank'); w.document.write(html); w.document.close(); w.focus(); w.print();
+}
+
+/* WhatsApp masivo: genera enlaces clicables */
+function visorWABulk(){
+ const list = citasFiltradas();
+ const linksDiv=byId('waLinks'); linksDiv.innerHTML='';
+ if(!list.length){ linksDiv.innerHTML='<div class="help">No hay citas en el filtro actual.</div>'; }
+ list.forEach(c=>{
+   const emp = empName(c.emp);
+   const fechaTxt=new Date((c.fecha||todayISO())+'T'+(c.hora||'00:00')).toLocaleString('es-PR');
+   const msg = encodeURIComponent(`Hola ${c.nombre||''}, confirmación de su cita:\n🗓 ${fechaTxt}\n👤 Técnica: ${emp}\n💈 Servicio: ${c.srv||'-'}`);
+   const phone=(c.tel||'').replace(/\D/g,'');
+   if(!phone) return;
+   const a=document.createElement('a');
+   a.href=`https://wa.me/${phone}?text=${msg}`;
+   a.target='_blank';
+   a.textContent=`${c.nombre||'(sin nombre)'} — ${phone}`;
+   a.style.display='block';
+   linksDiv.appendChild(a);
+ });
+ byId('waModal').classList.remove('hidden');
+}
+
+/* =============== SUPLIDORES =============== */
+function supAdd(){
+ const prov=byId('sup_prov').value.trim();
+ const doc =byId('sup_doc').value.trim();
+ const fecha=byId('sup_fecha').value||todayISO();
+ const metodo=byId('sup_metodo').value;
+ const monto=+byId('sup_monto').value||0;
+ const notas=byId('sup_notas').value.trim();
+ if(!prov || !monto) return alert('Suplidor y monto son obligatorios.');
+ const arr=load(K.SUP,[]);
+ arr.push({id:uuid(), prov, doc, fecha, metodo, monto, notas});
+ save(K.SUP,arr);
+ byId('sup_prov').value=''; byId('sup_doc').value=''; byId('sup_monto').value=''; byId('sup_notas').value='';
+ renderSup();
+}
+function supDel(id){
+ save(K.SUP, load(K.SUP,[]).filter(x=>x.id!==id));
+ renderSup();
+}
+function renderSup(){
+ const tb=byId('tblSup').querySelector('tbody');
+ const arr=load(K.SUP,[]).sort((a,b)=>(a.fecha+a.doc).localeCompare(b.fecha+b.doc));
+ tb.innerHTML = arr.map(s=>`
+   <tr class="tr">
+     <td>${s.fecha}</td><td>${s.prov}</td><td>${s.doc||''}</td><td>${s.metodo}</td>
+     <td>${fmtMoney(s.monto)}</td><td>${s.notas||''}</td>
+     <td class="no-print"><button class="btn-danger" onclick="supDel('${s.id}')">X</button></td>
+   </tr>`).join('');
+ const tot = arr.reduce((a,b)=>a+(+b.monto||0),0);
+ byId('sup_total').textContent = fmtMoney(tot);
+}
+function supCSV(){
+ const arr=load(K.SUP,[]);
+ let csv='Fecha,Suplidor,Documento,Método,Monto,Notas\n';
+ arr.forEach(s=> csv+=`${s.fecha},"${(s.prov||'').replace(/"/g,'""')}","${(s.doc||'').replace(/"/g,'""')}",${s.metodo},${s.monto},"${(s.notas||'').replace(/"/g,'""')}"\n`);
+ download(`SUPLIDORES_${todayISO()}.csv`, csv, 'text/csv');
+}
+function supPDF(){
+ const arr=load(K.SUP,[]);
+ const total = arr.reduce((a,b)=>a+(+b.monto||0),0);
+ const html=`
+<html><head><meta charset="utf-8"><title>Suplidores</title>
+<style>
+body{font-family:${getComputedStyle(document.documentElement).getPropertyValue('--font')}; padding:20px}
+table{width:100%; border-collapse:collapse; margin-top:10px}
+th,td{border:1px solid #ddd; padding:6px}
+h2,h3{margin:0}.right{text-align:right}
+</style></head><body>
+<h2>${(load(K.CFG,{}).name)||'Salon Pro'} — Suplidores/Compras</h2>
+<table><thead><tr>
+ <th>Fecha</th><th>Suplidor</th><th>Documento</th><th>Método</th><th>Monto</th><th>Notas</th>
+</tr></thead><tbody>
+ ${arr.map(s=>`<tr>
+  <td>${s.fecha}</td><td>${s.prov}</td><td>${s.doc||''}</td><td>${s.metodo}</td>
+  <td class="right">${(+s.monto||0).toFixed(2)}</td><td>${s.notas||''}</td>
+ </tr>`).join('')}
+</tbody></table>
+<h2 class="right">Total: ${total.toFixed(2)}</h2>
+</body></html>`;
+ const w=window.open('','_blank'); w.document.write(html); w.document.close(); w.focus(); w.print();
+}
+
+/* =============== FACTURAS (reportes por técnica) =============== */
+function parseTipFromNotes(notas){
+ if(!notas) return 0;
+ // reemplaza coma decimal por punto; toma primera cifra encontrada (12 | 12.5 | 12,50)
+ const m = notas.replace(',', '.').match(/(\d+(\.\d+)?)/);
+ return m ? parseFloat(m[1]) : 0;
+}
+function filterFacturas(){
+ const emp = byId('rf_emp').value;
+ const d = byId('rf_desde').value;
+ const h = byId('rf_hasta').value;
+ let facts = load(K.FACTS,[]);
+ if(d) facts = facts.filter(f=>f.fecha>=d);
+ if(h) facts = facts.filter(f=>f.fecha<=h);
+ if(emp) facts = facts.filter(f=>f.emp===emp);
+ return facts.sort((a,b)=> (a.fecha+a.num).localeCompare(b.fecha+b.num));
+}
+function renderFactPreview(){
+ const tb=byId('tblFactPreview').querySelector('tbody');
+ const facts = filterFacturas();
+ const rows = facts.map(f=>{
+   const prop = parseTipFromNotes(f.notas);
+   return `<tr class="tr">
+     <td>${f.num}</td><td>${f.fecha}</td><td>${f.cli||''}</td><td>${empName(f.emp)}</td>
+     <td>${f.pago||''}</td><td>${(+f.sub||0).toFixed(2)}</td><td>${(+f.tax||0).toFixed(2)}</td><td>${(+f.tot||0).toFixed(2)}</td>
+     <td>${prop.toFixed(2)}</td>
+   </tr>`;
+ }).join('');
+ tb.innerHTML = rows || '<tr><td colspan="9" class="small">No hay facturas en el filtro.</td></tr>';
+
+ const sum = (arr, k) => arr.reduce((a,b)=> a + (+b[k]||0), 0);
+ const sub = sum(facts,'sub');
+ const tax = sum(facts,'tax');
+ const tot = sum(facts,'tot');
+ const tips= facts.reduce((a,b)=> a + parseTipFromNotes(b.notas), 0);
+
+ byId('rf_sub').textContent = fmtMoney(sub);
+ byId('rf_tax').textContent = fmtMoney(tax);
+ byId('rf_tot').textContent = fmtMoney(tot);
+ byId('rf_tips').textContent= fmtMoney(tips);
+}
+function rfPDFVentas(){
+ const facts=filterFacturas();
+ const cfg=load(K.CFG,{});
+ const {desde,hasta} = {desde:byId('rf_desde').value||'', hasta:byId('rf_hasta').value||''};
+ const empSel = byId('rf_emp').value;
+ const empTxt = empSel? empName(empSel):'Todos';
+
+ const sub = facts.reduce((a,b)=>a+(+b.sub||0),0);
+ const tax = facts.reduce((a,b)=>a+(+b.tax||0),0);
+ const tot = facts.reduce((a,b)=>a+(+b.tot||0),0);
+
+ const html=`
+<html><head><meta charset="utf-8"><title>Ventas por técnica</title>
+<style>
+body{font-family:${getComputedStyle(document.documentElement).getPropertyValue('--font')}; padding:20px}
+table{width:100%; border-collapse:collapse; margin-top:10px}
+th,td{border:1px solid #ddd; padding:6px}
+h2,h3{margin:0}.right{text-align:right}
+</style></head><body>
+<h2>${cfg.name||'Salon Pro'} — Ventas por técnica</h2>
+<div>Empleado: <b>${empTxt}</b> ${ (desde||hasta) ? `| Rango: ${desde||'…'} a ${hasta||'…'}` : ''}</div>
+<table><thead><tr>
+  <th>#</th><th>Fecha</th><th>Cliente</th><th>Método</th><th>Subtotal</th><th>IVU</th><th>Total</th>
+</tr></thead><tbody>
+  ${facts.map(f=>`<tr>
+    <td>${f.num}</td><td>${f.fecha}</td><td>${f.cli||''}</td><td>${f.pago||''}</td>
+    <td class="right">${(+f.sub||0).toFixed(2)}</td>
+    <td class="right">${(+f.tax||0).toFixed(2)}</td>
+    <td class="right">${(+f.tot||0).toFixed(2)}</td>
+  </tr>`).join('')}
+</tbody></table>
+<h3 class="right">Subtotal: ${sub.toFixed(2)}</h3>
+<h3 class="right">IVU: ${tax.toFixed(2)}</h3>
+<h2 class="right">Total general: ${tot.toFixed(2)}</h2>
+</body></html>`;
+ const w=window.open('','_blank'); w.document.write(html); w.document.close(); w.focus(); w.print();
+}
+function rfPDFPropinas(){
+ const facts=filterFacturas();
+ const cfg=load(K.CFG,{});
+ const {desde,hasta} = {desde:byId('rf_desde').value||'', hasta:byId('rf_hasta').value||''};
+ const empSel = byId('rf_emp').value;
+ const empTxt = empSel? empName(empSel):'Todos';
+
+ let totalTips=0;
+ const rows = facts.map(f=>{
+   const tip=parseTipFromNotes(f.notas);
+   totalTips+=tip;
+   return `<tr>
+     <td>${f.num}</td><td>${f.fecha}</td><td>${f.cli||''}</td>
+     <td class="right">${tip.toFixed(2)}</td>
+     <td>${(f.notas||'').replace(/</g,'&lt;')}</td>
+   </tr>`;
+ }).join('');
+
+ const html=`
+<html><head><meta charset="utf-8"><title>Propinas por técnica</title>
+<style>
+body{font-family:${getComputedStyle(document.documentElement).getPropertyValue('--font')}; padding:20px}
+table{width:100%; border-collapse:collapse; margin-top:10px}
+th,td{border:1px solid #ddd; padding:6px}
+h2,h3{margin:0}.right{text-align:right}
+</style></head><body>
+<h2>${cfg.name||'Salon Pro'} — Propinas por técnica</h2>
+<div>Empleado: <b>${empTxt}</b> ${ (desde||hasta) ? `| Rango: ${desde||'…'} a ${hasta||'…'}` : ''}</div>
+<table><thead><tr><th>#</th><th>Fecha</th><th>Cliente</th><th>Propina</th><th>Notas (origen)</th></tr></thead>
+<tbody>${rows}</tbody></table>
+<h2 class="right">Total propinas: ${totalTips.toFixed(2)}</h2>
+</body></html>`;
+ const w=window.open('','_blank'); w.document.write(html); w.document.close(); w.focus(); w.print();
+}
+
+/* =============== CONFIG: edición de colores/logo/fondo =============== */
+function fileToDataURL(file){
+ return new Promise(res=>{
+   const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(file);
+ });
+}
+
+/* =============== BACKUP/RESTORE =============== */
+function backupExport(){
+ const dump={
+   config:load(K.CFG,{}),
+   empleados:load(K.EMP,[]),
+   servicios:load(K.SVC,[]),
+   citas:load(K.CITAS,[]),
+   facturas:load(K.FACTS,[]),
+   suplidores:load(K.SUP,[])
+ };
+ download(`visor_backup_${Date.now()}.json`, JSON.stringify(dump,null,2), 'application/json');
+}
+function backupImport(file){
+ const r=new FileReader();
+ r.onload=()=>{
+   try{
+     const j=JSON.parse(r.result);
+     if(j.config) save(K.CFG,j.config);
+     if(j.empleados) save(K.EMP,j.empleados);
+     if(j.servicios) save(K.SVC,j.servicios);
+     if(j.citas) save(K.CITAS,j.citas);
+     if(j.facturas) save(K.FACTS,j.facturas);
+     if(j.suplidores) save(K.SUP,j.suplidores);
+     applyBrand(); renderEmpSelect(); renderCitas(); renderSup(); renderFactPreview();
+     alert('Backup restaurado.');
+   }catch(e){ alert('Archivo inválido.'); }
+ };
+ r.readAsText(file);
+}
+
+/* =============== EVENTOS UI =============== */
+function bindUI(){
+ // pestañas
+ $$('.tab').forEach(b=> b.addEventListener('click', ()=>switchTab(b.dataset.tab)));
+ byId('btnPrint')?.addEventListener('click', ()=>window.print());
+
+ // CITAS
+ byId('vc_aplicar').addEventListener('click', renderCitas);
+ byId('vc_limpiar').addEventListener('click', ()=>{
+   ['vc_nombre','vc_emp','vc_desde','vc_hasta'].forEach(id=>{ const el=byId(id); if(!el) return; el.value=''; });
+   renderCitas();
+ });
+ byId('vc_csv').addEventListener('click', visorCSV);
+ byId('vc_pdf').addEventListener('click', visorPDF);
+ byId('vc_wa_bulk').addEventListener('click', visorWABulk);
+ byId('waClose').addEventListener('click', ()=> byId('waModal').classList.add('hidden'));
+
+ // SUPLIDORES
+ byId('sup_add').addEventListener('click', supAdd);
+ byId('sup_csv').addEventListener('click', supCSV);
+ byId('sup_pdf').addEventListener('click', supPDF);
+
+ // REPORTES FACTURACIÓN
+ ['rf_emp','rf_desde','rf_hasta'].forEach(id=>{
+   const el=byId(id); if(el) el.addEventListener('change', renderFactPreview);
+ });
+ byId('rf_pdf_ventas').addEventListener('click', rfPDFVentas);
+ byId('rf_pdf_propinas').addEventListener('click', rfPDFPropinas);
+
+ // CONFIG
+ byId('cfg_logo').addEventListener('change', async e=>{
+   const f=e.target.files?.[0]; if(!f) return; const data=await fileToDataURL(f);
+   byId('cfg_logo_prev').src=data; const c=load(K.CFG,{}); save(K.CFG,{...c,logo:data}); applyBrand();
+ });
+ byId('cfg_bg').addEventListener('change', async e=>{
+   const f=e.target.files?.[0]; if(!f) return; const data=await fileToDataURL(f);
+   const c=load(K.CFG,{}); save(K.CFG,{...c,bg:data}); applyBrand();
+ });
+ byId('cfg_name').addEventListener('input', e=>{ const c=load(K.CFG,{}); save(K.CFG,{...c,name:e.target.value}); applyBrand(); });
+ byId('cfg_sub').addEventListener('input', e=>{ const c=load(K.CFG,{}); save(K.CFG,{...c,sub:e.target.value}); applyBrand(); });
+ byId('cfg_primary').addEventListener('input', e=>{ const c=load(K.CFG,{}); save(K.CFG,{...c,primary:e.target.value}); applyBrand(); });
+ byId('cfg_accent').addEventListener('input', e=>{ const c=load(K.CFG,{}); save(K.CFG,{...c,accent:e.target.value}); applyBrand(); });
+ byId('cfg_bg_op').addEventListener('input', e=>{ const c=load(K.CFG,{}); save(K.CFG,{...c,bgOpacity:+e.target.value}); applyBrand(); });
+
+ // BACKUP
+ byId('bk_export').addEventListener('click', backupExport);
+ byId('bk_import').addEventListener('change', e=> e.target.files[0] && backupImport(e.target.files[0]));
+}
+
+/* =============== BOOT =============== */
+function boot(){
+ applyBrand();
+ renderEmpSelect();
+ renderCitas();
+ renderSup();
+ // filtros default reportes
+ byId('rf_desde').value = todayISO();
+ byId('rf_hasta').value = todayISO();
+ renderFactPreview();
+ bindUI();
+}
+window.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
