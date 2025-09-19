@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Salón Pro — Citas + Facturación (Unificado)</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f0f12">
+  <style>
+  /* =========================================================
+     THEME / DISEÑO ELEGANTE — Editable desde Configuración
+     ========================================================= */
+  :root{
+    --bg:#0f0f12;
+    --fg:#ffffff;
+    --muted:#a7a7b1;
+    --primary:#6ee7b7;
+    --primary-2:#22c55e;
+    --accent:#93c5fd;
+    --danger:#ef4444;
+    --warn:#f59e0b;
+    --card:#171821;
+    --card-2:#1e202b;
+    --topbar:#11121a;
+    --footer:#0c0d12;
+    --btn:#24263a;
+    --outline:#2a2d40;
+    --shadow:0 6px 24px rgba(0,0,0,.35);
+    --radius:14px;
+    --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
+  }
+
+  /* ============== RESET + BASE ================= */
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font-family:var(--font)}
+  img{max-width:100%;display:block}
+  a{color:var(--accent);text-decoration:none}
+  button{cursor:pointer}
+  input,select,textarea,button{font:inherit;color:inherit}
+
+  /* ============== LAYOUT ================= */
+  .topbar{
+    position:sticky;top:0;z-index:50;
+    background:var(--topbar);border-bottom:1px solid var(--outline);
+    padding:10px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between
+  }
+  .logo-wrap{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:42px;height:42px;object-fit:cover;border-radius:10px;border:1px solid var(--outline);background:#111
+  }
+  .brand{font-weight:700;letter-spacing:.3px}
+  .actions{display:flex;gap:8px;align-items:center}
+  .btn{
+    background:var(--btn);border:1px solid var(--outline);padding:9px 12px;border-radius:10px;
+    display:inline-flex;gap:8px;align-items:center;box-shadow:var(--shadow)
+  }
+  .btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary-2));color:#0b1512;border:none}
+  .btn.warn{background:linear-gradient(135deg,#fcd34d,var(--warn));color:#111;border:none}
+  .btn.danger{background:linear-gradient(135deg,#fda4af,var(--danger));color:#111;border:none}
+  .btn.ghost{background:transparent;border:1px dashed var(--outline)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .app{
+    display:grid;grid-template-columns:260px 1fr;gap:16px;padding:16px;max-width:1400px;margin:0 auto
+  }
+  .sidebar{
+    background:var(--card);border:1px solid var(--outline);border-radius:var(--radius);padding:12px;height:max-content;position:sticky;top:72px
+  }
+  .nav{display:grid;gap:8px}
+  .nav button{
+    width:100%;text-align:left;background:transparent;border:1px solid var(--outline);
+    padding:10px 12px;border-radius:10px
+  }
+  .nav button.active{background:var(--card-2);border-color:var(--accent)}
+  .content{
+    background:var(--card);border:1px solid var(--outline);border-radius:var(--radius);
+    padding:16px;min-height:65vh
+  }
+
+  .grid{
+    display:grid;gap:12px
+  }
+  @media(min-width:900px){
+    .grid.cols-2{grid-template-columns:1fr 1fr}
+    .grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+  }
+
+  .card{background:var(--card-2);border:1px solid var(--outline);border-radius:12px;padding:14px}
+  .card h3{margin:.2rem 0 .6rem 0;font-size:1.05rem}
+  .field{display:grid;gap:6px;margin-bottom:10px}
+  .field.inline{grid-template-columns:160px 1fr;align-items:center}
+  .field input,.field select,.field textarea{
+    background:#0f1017;border:1px solid var(--outline);border-radius:10px;padding:10px
+  }
+  .pill{display:inline-flex;gap:8px;align-items:center;background:#0f1017;border:1px solid var(--outline);padding:6px 10px;border-radius:999px;font-size:.85rem}
+
+  .table{width:100%;border-collapse:collapse}
+  .table th,.table td{border-bottom:1px solid var(--outline);padding:10px 8px;text-align:left;font-size:.95rem}
+  .table th{color:var(--muted);font-weight:600}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .footer{
+    padding:18px;text-align:center;color:var(--muted);border-top:1px solid var(--outline);background:var(--footer);margin-top:18px
+  }
+
+  /* ============== LOGIN SCREEN ================= */
+  .login{
+    max-width:440px;margin:8vh auto;background:var(--card);border:1px solid var(--outline);
+    border-radius:16px;padding:20px;box-shadow:var(--shadow)
+  }
+  .login .big-logo{
+    width:80px;height:80px;border-radius:16px;border:1px solid var(--outline);margin:0 auto 12px;background:#111
+  }
+  .hint{color:var(--muted);font-size:.9rem}
+
+  /* ============== PRINT (para PDF) ============== */
+  @media print{
+    body{background:#fff;color:#000}
+    .topbar,.sidebar,.toolbar,.no-print{display:none !important}
+    .content{border:none}
+    .print-area{display:block}
+    .card{border:none}
+  }
+  </style>
+</head>
+<body>
+
+<!-- ================= LOGIN =================== -->
+<section id="view-login" class="login" style="display:none">
+  <img id="loginLogo" class="big-logo" alt="logo">
+  <h2 style="text-align:center;margin:.2rem 0">Salón Pro — Acceso</h2>
+  <p class="hint" style="text-align:center;margin-bottom:12px">Usuario: <b>admin</b> — Clave inicial: <b>admin123</b> (cámbiala en Configuración)</p>
+  <div class="field">
+    <label>Usuario</label>
+    <input id="loginUser" placeholder="usuario">
+  </div>
+  <div class="field">
+    <label>Contraseña</label>
+    <input id="loginPass" type="password" placeholder="contraseña">
+  </div>
+  <div class="toolbar">
+    <button class="btn primary" id="btnLogin">Entrar</button>
+    <button class="btn ghost" id="btnSeed">Cargar demo</button>
+  </div>
+  <div class="hint" id="loginMsg"></div>
+</section>
+
+<!-- ================= APP WRAPPER ============== -->
+<section id="view-app" style="display:none">
+  <div class="topbar">
+    <div class="logo-wrap">
+      <img id="appLogo" class="logo" alt="logo">
+      <div>
+        <div class="brand" id="brandName">Salón Pro</div>
+        <div class="hint" id="brandSub">Citas & Facturación</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btnGoHome">Dashboard</button>
+      <button class="btn ghost" id="btnLogout">Salir</button>
+    </div>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="nav">
+        <button data-view="dashboard" class="active">🏠 Dashboard</button>
+        <button data-view="citas">📅 Citas</button>
+        <button data-view="visor">🗂️ Visor de Citas</button>
+        <button data-view="facturacion">🧾 Facturación</button>
+        <button data-view="rendimiento">📈 Rendimiento</button>
+        <button data-view="config">⚙️ Configuración</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <!-- Aquí se renderizan las vistas -->
+      <div id="router-outlet"></div>
+    </main>
+  </div>
+
+  <div class="footer">
+    Gracias por preferirnos — Todos los derechos reservados © <span id="footBrand">Oasis Services PR</span>
+  </div>
+</section>
+
+<script>
+/* ============================================================
+   STATE, STORAGE & UTILIDADES BÁSICAS
+   ============================================================ */
+const LS_KEYS = {
+  CONFIG: 'salonpro.config',
+  USERS:  'salonpro.users',
+  TECHS:  'salonpro.techs',
+  CITAS:  'salonpro.citas',
+  FACT:   'salonpro.facturas'
+};
+
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+function load(key, fallback){
+  try{ return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+  catch{ return fallback; }
+}
+function save(key, value){
+  localStorage.setItem(key, JSON.stringify(value));
+}
+function uid(prefix='id'){
+  return prefix+'_'+Math.random().toString(36).slice(2,10);
+}
+function fmtDate(d){
+  const t = (d instanceof Date)? d : new Date(d);
+  return t.toISOString().slice(0,10);
+}
+function fmtTime(d){
+  const t = (d instanceof Date)? d : new Date(d);
+  return t.toTimeString().slice(0,5);
+}
+function parseDateInput(value, time="00:00"){
+  return new Date(value+"T"+time+":00");
+}
+function money(n){ return '$'+Number(n||0).toFixed(2); }
+
+const App = {
+  state:{
+    user:null,
+    view:'dashboard'
+  },
+  data:{
+    config:null,
+    users:null,
+    techs:null,
+    citas:null,
+    facturas:null
+  }
+};
+  // ========================= CONFIG POR DEFECTO =========================
+const DEFAULT_CONFIG = {
+  brandName: "Salón Pro",
+  brandSub: "Citas & Facturación",
+  footerBrand: "Oasis Services PR",
+  theme:{
+    bg:"#0f0f12", fg:"#ffffff", muted:"#a7a7b1",
+    primary:"#6ee7b7", primary2:"#22c55e", accent:"#93c5fd",
+    danger:"#ef4444", warn:"#f59e0b",
+    card:"#171821", card2:"#1e202b", topbar:"#11121a", footer:"#0c0d12",
+    btn:"#24263a", outline:"#2a2d40"
+  },
+  logoDataUrl:"", // se guarda base64
+  business:{
+    nombre:"Oasis Services PR",
+    telefono:"787-664-3079",
+    email:"cynthiasalon2021@gmail.com",
+    direccion:"Puerto Rico",
+    website:"https://oasisservicespr.com"
+  },
+  whatsappPrefix:"+1787", // para armar mensajes
+  calendarBase:"https://calendar.google.com/calendar/u/0/r/eventedit"
+};
+
+const DEFAULT_USERS = [{user:"admin", pass:"admin123"}];
+const DEFAULT_TECHS = ["Cynthia","María","Karla","Ana","Equipo"];
+const DEFAULT_CITAS = [];
+const DEFAULT_FACTURAS = [];
+
+// ========================= INIT APP =========================
+function applyTheme(theme){
+  const r = document.documentElement;
+  r.style.setProperty('--bg', theme.bg);
+  r.style.setProperty('--fg', theme.fg);
+  r.style.setProperty('--muted', theme.muted);
+  r.style.setProperty('--primary', theme.primary);
+  r.style.setProperty('--primary-2', theme.primary2);
+  r.style.setProperty('--accent', theme.accent);
+  r.style.setProperty('--danger', theme.danger);
+  r.style.setProperty('--warn', theme.warn);
+  r.style.setProperty('--card', theme.card);
+  r.style.setProperty('--card-2', theme.card2);
+  r.style.setProperty('--topbar', theme.topbar);
+  r.style.setProperty('--footer', theme.footer);
+  r.style.setProperty('--btn', theme.btn);
+  r.style.setProperty('--outline', theme.outline);
+}
+
+function loadAll(){
+  App.data.config   = load(LS_KEYS.CONFIG, DEFAULT_CONFIG);
+  App.data.users    = load(LS_KEYS.USERS, DEFAULT_USERS);
+  App.data.techs    = load(LS_KEYS.TECHS, DEFAULT_TECHS);
+  App.data.citas    = load(LS_KEYS.CITAS, DEFAULT_CITAS);
+  App.data.facturas = load(LS_KEYS.FACT, DEFAULT_FACTURAS);
+
+  applyTheme(App.data.config.theme);
+  // logos / textos
+  $('#brandName').textContent = App.data.config.brandName;
+  $('#brandSub').textContent  = App.data.config.brandSub;
+  $('#footBrand').textContent = App.data.config.footerBrand;
+  const logo = App.data.config.logoDataUrl;
+  if(logo){
+    $('#loginLogo').src = logo;
+    $('#appLogo').src = logo;
+  }else{
+    $('#loginLogo').style.background='#111';
+    $('#appLogo').style.background='#111';
+  }
+}
+
+function showLogin(){
+  $('#view-login').style.display = 'block';
+  $('#view-app').style.display = 'none';
+}
+function showApp(){
+  $('#view-login').style.display = 'none';
+  $('#view-app').style.display = 'block';
+  routeTo('dashboard');
+}
+function routeTo(view){
+  App.state.view = view;
+  $$('.nav button').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  const outlet = $('#router-outlet');
+  outlet.innerHTML = '';
+  if(view==='dashboard') renderDashboard(outlet);
+  if(view==='citas') renderCitas(outlet);
+  if(view==='visor') renderVisor(outlet);
+  if(view==='facturacion') renderFacturacion(outlet);
+  if(view==='rendimiento') renderRendimiento(outlet);
+  if(view==='config') renderConfig(outlet);
+}
+
+function seedDemo(){
+  // Citas demo
+  const today = new Date();
+  const techs = App.data.techs;
+  const demoCitas = [];
+  for(let i=0;i<20;i++){
+    const d = new Date(today); d.setDate(d.getDate() - Math.floor(Math.random()*20));
+    const hora = String(8 + Math.floor(Math.random()*9)).padStart(2,'0')+':00';
+    demoCitas.push({
+      id: uid('cita'),
+      fecha: fmtDate(d),
+      hora,
+      cliente: 'Cliente '+(i+1),
+      servicio: ['Gel tips','Pedicura','Corte','Coloración','Spa'][Math.floor(Math.random()*5)],
+      tecnica: techs[Math.floor(Math.random()*techs.length)],
+      telefono: '787-555-00'+String(i).padStart(2,'0'),
+      total: +(20 + Math.random()*80).toFixed(2),
+      notas:''
+    });
+  }
+  // Facturas demo
+  const demoFact = demoCitas.slice(0,14).map((c,i)=>({
+    id: uid('fac'),
+    fecha: c.fecha,
+    cliente: c.cliente,
+    tecnica: c.tecnica,
+    items:[
+      {desc:c.servicio, qty:1, price:c.total}
+    ],
+    subtotal:c.total, impuestos:0, total:c.total, metodo:['ATH Móvil','Efectivo','Tarjeta'][i%3]
+  }));
+
+  App.data.citas = demoCitas;
+  App.data.facturas = demoFact;
+  save(LS_KEYS.CITAS, App.data.citas);
+  save(LS_KEYS.FACT, App.data.facturas);
+  $('#loginMsg').textContent = 'Datos de demostración cargados.';
+}
+
+// ========================= AUTH =========================
+function login(user, pass){
+  const ok = App.data.users.some(u=>u.user===user && u.pass===pass);
+  if(ok){ App.state.user = user; showApp(); }
+  else { $('#loginMsg').textContent = 'Usuario o contraseña incorrectos.'; }
+}
+function logout(){
+  App.state.user = null;
+  showLogin();
+}
+
+// ========================= RENDERERS =========================
+function renderDashboard(root){
+  root.innerHTML = `
+    <div class="grid cols-3">
+      <div class="card">
+        <h3>Resumen Rápido</h3>
+        <div class="grid">
+          <div class="pill">Citas: <b id="kpiCitas"></b></div>
+          <div class="pill">Facturas: <b id="kpiFact"></b></div>
+          <div class="pill">Ingreso Hoy: <b id="kpiHoy"></b></div>
+        </div>
+        <div class="toolbar no-print">
+          <button class="btn" id="goCitas">Ir a Citas</button>
+          <button class="btn" id="goFact">Ir a Facturación</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Accesos rápidos</h3>
+        <div class="toolbar">
+          <button class="btn" id="btnNuevaCita">+ Nueva Cita</button>
+          <button class="btn" id="btnNuevaFactura">+ Nueva Factura</button>
+          <button class="btn ghost" id="btnPrint">Imprimir / PDF</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Atajos</h3>
+        <div class="grid">
+          <div class="pill">Configurar técnicas</div>
+          <div class="pill">Editar colores y logo</div>
+          <div class="pill">Cambiar credenciales</div>
+        </div>
+      </div>
+    </div>
+  `;
+  // KPIs
+  $('#kpiCitas').textContent = App.data.citas.length;
+  $('#kpiFact').textContent  = App.data.facturas.length;
+  // Ingreso de hoy
+  const hoy = fmtDate(new Date());
+  const ingresoHoy = App.data.facturas
+    .filter(f=>f.fecha===hoy)
+    .reduce((a,b)=>a + Number(b.total||0), 0);
+  $('#kpiHoy').textContent = money(ingresoHoy);
+
+  // Eventos
+  $('#goCitas').onclick = ()=>routeTo('citas');
+  $('#goFact').onclick  = ()=>routeTo('facturacion');
+  $('#btnNuevaCita').onclick = ()=>{
+    routeTo('citas');
+    setTimeout(()=>$('#citaCliente')?.focus(), 50);
+  };
+  $('#btnNuevaFactura').onclick = ()=>{
+    routeTo('facturacion');
+    setTimeout(()=>$('#facCliente')?.focus(), 50);
+  };
+  $('#btnPrint').onclick = ()=>window.print();
+}
+
+function makeSelectOptions(list, placeholder='Seleccione'){
+  return `<option value="">${placeholder}</option>` + list.map(v=>`<option>${v}</option>`).join('');
+}
+
+// --------- RANGO FECHAS AUX ------------
+function getRange(kind, baseDate){
+  const d = baseDate ? new Date(baseDate) : new Date();
+  const start = new Date(d), end = new Date(d);
+  if(kind==='dia'){
+    // start hoy 00:00, end hoy 23:59
+  }else if(kind==='semana'){
+    const day = d.getDay(); // 0=Dom
+    const diff = (day+6)%7; // Lunes como inicio
+    start.setDate(d.getDate()-diff);
+    end.setDate(start.getDate()+6);
+  }else if(kind==='mes'){
+    start.setDate(1);
+    end.setMonth(d.getMonth()+1); end.setDate(0);
+  }else if(kind==='ano'){
+    start.setMonth(0,1);
+    end.setMonth(12,0);
+  }
+  return {start: fmtDate(start), end: fmtDate(end)};
+}
+
+// ========================= CARGA INICIAL UI =========================
+document.addEventListener('DOMContentLoaded', ()=>{
+  loadAll();
+  // login display
+  showLogin();
+
+  // botones login
+  $('#btnLogin').onclick = ()=>{
+    login($('#loginUser').value.trim(), $('#loginPass').value);
+  };
+  $('#btnSeed').onclick = seedDemo;
+
+  // topbar
+  $('#btnGoHome').onclick = ()=>routeTo('dashboard');
+  $('#btnLogout').onclick = logout;
+
+  // nav
+  $$('.nav button').forEach(b=>{
+    b.onclick = ()=>routeTo(b.dataset.view);
+  });
+
+  // Si ya estaba logueado en sesión anterior (opcional)
+  // Mantener simple: no se re-usa por seguridad
+});
+  /* ============================================================
+   VISTA: CITAS (crear, listar, WhatsApp, Google Calendar)
+   ============================================================ */
+function renderCitas(root){
+  const techOptions = makeSelectOptions(App.data.techs, 'Técnica');
+  const hoy = fmtDate(new Date());
+  root.innerHTML = `
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Nueva Cita</h3>
+        <div class="field"><label>Cliente</label><input id="citaCliente" placeholder="Nombre del cliente"></div>
+        <div class="field"><label>Teléfono</label><input id="citaTel" placeholder="787..."></div>
+        <div class="field inline">
+          <label>Fecha</label><input type="date" id="citaFecha" value="${hoy}">
+        </div>
+        <div class="field inline">
+          <label>Hora</label><input type="time" id="citaHora" value="09:00">
+        </div>
+        <div class="field"><label>Servicio</label><input id="citaServ" placeholder="Servicio"></div>
+        <div class="field"><label>Técnica</label>
+          <select id="citaTec">${techOptions}</select>
+        </div>
+        <div class="field inline">
+          <label>Total</label><input type="number" id="citaTotal" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="field"><label>Notas</label><textarea id="citaNotas" rows="3" placeholder="Notas..."></textarea></div>
+        <div class="toolbar">
+          <button class="btn primary" id="btnGuardarCita">Guardar</button>
+          <button class="btn" id="btnCitaWhats">WhatsApp</button>
+          <button class="btn" id="btnCitaCal">Google Calendar</button>
+          <button class="btn ghost" id="btnCitaLimpiar">Limpiar</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Filtrar Citas</h3>
+        <div class="toolbar">
+          <select id="fCitasTec">${makeSelectOptions(['Todas',...App.data.techs],'Técnica')}</select>
+          <select id="fCitasPeriodo">
+            <option value="dia">Hoy</option>
+            <option value="semana">Semana</option>
+            <option value="mes" selected>Mes</option>
+            <option value="ano">Año</option>
+            <option value="rango">Rango</option>
+          </select>
+          <input type="date" id="fCitasDesde" style="display:none">
+          <input type="date" id="fCitasHasta" style="display:none">
+          <button class="btn" id="fCitasAplicar">Aplicar</button>
+          <button class="btn ghost" id="fCitasLimpiar">Limpiar</button>
+        </div>
+        <div class="toolbar">
+          <button class="btn" id="expCitasCsv">Exportar CSV</button>
+          <button class="btn" id="expCitasExcel">Exportar Excel</button>
+          <button class="btn ghost" id="printCitas">Imprimir / PDF</button>
+        </div>
+
+        <div class="print-area">
+          <table class="table" id="tblCitas">
+            <thead>
+              <tr>
+                <th>Fecha</th><th>Hora</th><th>Cliente</th><th>Servicio</th>
+                <th>Técnica</th><th>Teléfono</th><th>Total</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Eventos creación
+  $('#btnGuardarCita').onclick = ()=>{
+    const c = {
+      id: uid('cita'),
+      fecha: $('#citaFecha').value || fmtDate(new Date()),
+      hora:  $('#citaHora').value || '09:00',
+      cliente: ($('#citaCliente').value||'').trim(),
+      telefono: ($('#citaTel').value||'').trim(),
+      servicio: ($('#citaServ').value||'').trim(),
+      tecnica:  $('#citaTec').value || '',
+      total: Number($('#citaTotal').value || 0),
+      notas: ($('#citaNotas').value||'').trim()
+    };
+    if(!c.cliente || !c.tecnica){ alert('Cliente y Técnica son requeridos'); return; }
+    App.data.citas.unshift(c);
+    save(LS_KEYS.CITAS, App.data.citas);
+    renderCitas(root);
+  };
+
+  $('#btnCitaLimpiar').onclick = ()=>renderCitas(root);
+
+  $('#btnCitaWhats').onclick = ()=>{
+    const cliente = ($('#citaCliente').value||'').trim();
+    const tel = ($('#citaTel').value||'').replace(/\D/g,'');
+    const fecha = $('#citaFecha').value;
+    const hora  = $('#citaHora').value;
+    const msg = encodeURIComponent(`Hola ${cliente}, su cita fue agendada para el ${fecha} a las ${hora}. ¡Gracias!`);
+    let phone = tel;
+    if(phone && !phone.startsWith('1')) phone = '1'+phone; // PR/US
+    const url = `https://wa.me/${phone}?text=${msg}`;
+    window.open(url,'_blank');
+  };
+
+  $('#btnCitaCal').onclick = ()=>{
+    const fecha = $('#citaFecha').value;
+    const hora  = $('#citaHora').value || '09:00';
+    const cliente = ($('#citaCliente').value||'Cita').trim();
+    const servicio = ($('#citaServ').value||'Servicio').trim();
+    const dtStart = fecha.replaceAll('-','') + 'T' + hora.replace(':','') + '00';
+    // 1 hora por defecto
+    const [hh,mm] = hora.split(':').map(Number);
+    const end = new Date(parseDateInput(fecha,hora)); end.setHours(hh+1,mm||0,0);
+    const dtEnd = fmtDate(end).replaceAll('-','') + 'T' + fmtTime(end).replace(':','') + '00';
+    const text = encodeURIComponent(`${servicio} — ${cliente}`);
+    const details = encodeURIComponent('Cita creada desde Salón Pro');
+    const url = `${App.data.config.calendarBase}?text=${text}&dates=${dtStart}/${dtEnd}&details=${details}`;
+    window.open(url,'_blank');
+  };
+
+  // Filtros
+  const periodo = $('#fCitasPeriodo');
+  const desde = $('#fCitasDesde');
+  const hasta = $('#fCitasHasta');
+  periodo.onchange = ()=>{
+    const isRango = periodo.value==='rango';
+    desde.style.display = isRango?'':'none';
+    hasta.style.display = isRango?'':'none';
+    if(isRango){
+      const r = getRange('mes');
+      desde.value = r.start; hasta.value=r.end;
+    }
+  };
+  $('#fCitasLimpiar').onclick = ()=>{ renderCitas(root); };
+  $('#fCitasAplicar').onclick = ()=> renderTablaCitas();
+
+  $('#expCitasCsv').onclick = ()=> exportTableCSV('#tblCitas','citas.csv');
+  $('#expCitasExcel').onclick = ()=> exportTableExcel('#tblCitas','citas.xls');
+  $('#printCitas').onclick = ()=> window.print();
+
+  // Render inicial
+  renderTablaCitas();
+
+  function renderTablaCitas(){
+    const tTec = $('#fCitasTec').value;
+    const per  = periodo.value;
+    let r = {start:null,end:null};
+    if(per==='rango'){
+      r.start = desde.value || fmtDate(new Date());
+      r.end   = hasta.value || fmtDate(new Date());
+    }else{
+      r = getRange(per, new Date());
+    }
+    const rows = App.data.citas
+      .filter(c=>{
+        const okTec = !tTec || tTec==='Todas' || c.tecnica===tTec;
+        const okFe  = (!r.start||c.fecha>=r.start) && (!r.end||c.fecha<=r.end);
+        return okTec && okFe;
+      })
+      .sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora));
+
+    const tbody = $('#tblCitas tbody');
+    tbody.innerHTML = rows.map(c=>`
+      <tr>
+        <td>${c.fecha}</td><td>${c.hora}</td><td>${c.cliente}</td>
+        <td>${c.servicio}</td><td>${c.tecnica}</td><td>${c.telefono}</td>
+        <td>${money(c.total)}</td>
+      </tr>`).join('');
+
+    // Total al final
+    const total = rows.reduce((a,b)=>a+Number(b.total||0),0);
+    const t = document.createElement('tr');
+    t.innerHTML = `<td colspan="6" style="text-align:right"><b>Total</b></td><td><b>${money(total)}</b></td>`;
+    tbody.appendChild(t);
+  }
+}
+
+/* ===== Export Helpers (CSV / Excel “HTML”) ===== */
+function exportTableCSV(sel, filename='data.csv'){
+  const rows = $$(sel+' tr');
+  const out = rows.map(tr=>Array.from(tr.children).map(td=>{
+    const txt = (td.innerText||'').replaceAll('"','""');
+    return `"${txt}"`;
+  }).join(',')).join('\n');
+  const blob = new Blob([out],{type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename; a.click();
+}
+function exportTableExcel(sel, filename='data.xls'){
+  const table = $(sel).outerHTML;
+  const html = `
+    <html><head><meta charset="UTF-8"></head>
+    <body>${table}</body></html>`;
+  const uri = 'data:application/vnd.ms-excel;base64,'+btoa(unescape(encodeURIComponent(html)));
+  const a = document.createElement('a'); a.href=uri; a.download=filename; a.click();
+}
+  /* ============================================================
+   VISTA: FACTURACIÓN (crear, listar, filtros por técnica y período,
+   exportar Excel/CSV, imprimir/PDF)
+   ============================================================ */
+function renderFacturacion(root){
+  const techOptions = makeSelectOptions(App.data.techs,'Técnica');
+
+  root.innerHTML = `
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Nueva Factura</h3>
+        <div class="field"><label>Cliente</label><input id="facCliente" placeholder="Nombre del cliente"></div>
+        <div class="field inline"><label>Fecha</label><input type="date" id="facFecha" value="${fmtDate(new Date())}"></div>
+        <div class="field"><label>Técnica</label><select id="facTec">${techOptions}</select></div>
+        <div class="field"><label>Método de pago</label>
+          <select id="facMetodo">
+            <option>ATH Móvil</option><option>Efectivo</option><option>Tarjeta</option>
+          </select>
+        </div>
+        <div class="card" style="background:#10121a">
+          <h3 style="margin-top:0">Ítems</h3>
+          <div id="itemsWrap"></div>
+          <div class="toolbar">
+            <button class="btn" id="btnAddItem">+ Añadir ítem</button>
+          </div>
+          <div class="grid cols-3">
+            <div class="field"><label>Subtotal</label><input id="facSub" type="number" step="0.01" value="0"></div>
+            <div class="field"><label>Impuestos</label><input id="facImp" type="number" step="0.01" value="0"></div>
+            <div class="field"><label>Total</label><input id="facTot" type="number" step="0.01" value="0"></div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button class="btn primary" id="btnGuardarFac">Guardar</button>
+          <button class="btn ghost" id="btnLimpiarFac">Limpiar</button>
+          <button class="btn" id="btnFacPrint">Imprimir / PDF</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Historial & Filtros</h3>
+        <div class="toolbar">
+          <select id="fFacTec">${makeSelectOptions(['Todas',...App.data.techs],'Técnica')}</select>
+          <select id="fFacPeriodo">
+            <option value="dia">Hoy</option>
+            <option value="semana">Semana</option>
+            <option value="mes" selected>Mes</option>
+            <option value="ano">Año</option>
+            <option value="rango">Rango</option>
+          </select>
+          <input type="date" id="fFacDesde" style="display:none">
+          <input type="date" id="fFacHasta" style="display:none">
+          <button class="btn" id="fFacAplicar">Aplicar</button>
+          <button class="btn ghost" id="fFacLimpiar">Limpiar</button>
+        </div>
+        <div class="toolbar">
+          <button class="btn" id="expFacCsv">Exportar CSV</button>
+          <button class="btn" id="expFacExcel">Exportar Excel</button>
+          <button class="btn ghost" id="printFac">Imprimir / PDF</button>
+        </div>
+
+        <div class="print-area">
+          <table class="table" id="tblFact">
+            <thead>
+              <tr>
+                <th>Fecha</th><th>Cliente</th><th>Técnica</th><th>Método</th>
+                <th>Subtotal</th><th>Impuestos</th><th>Total</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Items UI
+  const itemsWrap = $('#itemsWrap');
+  function addItem(desc='', qty=1, price=0){
+    const row = document.createElement('div');
+    row.className='grid cols-3';
+    row.style.alignItems='end';
+    row.innerHTML = `
+      <div class="field"><label>Descripción</label><input placeholder="Servicio/Producto" value="${desc}"></div>
+      <div class="field"><label>Cantidad</label><input type="number" step="0.01" value="${qty}"></div>
+      <div class="field"><label>Precio</label><input type="number" step="0.01" value="${price}"></div>
+      <div class="toolbar no-print"><button class="btn danger btnDel">Eliminar</button></div>
+    `;
+    row.querySelector('.btnDel').onclick = ()=>{ row.remove(); recalcTotals(); };
+    ['input','change'].forEach(ev=>{
+      row.addEventListener(ev, recalcTotals, true);
+    });
+    itemsWrap.appendChild(row);
+    recalcTotals();
+  }
+  function recalcTotals(){
+    const rows = Array.from(itemsWrap.children);
+    let subtotal = 0;
+    rows.forEach(r=>{
+      const [desc,qty,price] = r.querySelectorAll('input');
+      subtotal += Number(qty.value||0) * Number(price.value||0);
+    });
+    $('#facSub').value = subtotal.toFixed(2);
+    const imp = Number($('#facImp').value||0);
+    $('#facTot').value = (subtotal + imp).toFixed(2);
+  }
+
+  $('#btnAddItem').onclick = ()=>addItem();
+  $('#facImp').oninput = recalcTotals;
+  addItem('Servicio',1,35);
+
+  // Guardar
+  $('#btnGuardarFac').onclick = ()=>{
+    const items = Array.from(itemsWrap.children).map(r=>{
+      const [d,q,p] = r.querySelectorAll('input');
+      return {desc:d.value.trim(), qty:Number(q.value||0), price:Number(p.value||0)};
+    }).filter(it=>it.desc);
+    const sub = items.reduce((a,b)=>a+b.qty*b.price,0);
+    const imp = Number($('#facImp').value||0);
+    const tot = Number($('#facTot').value||0) || (sub+imp);
+
+    const f = {
+      id: uid('fac'),
+      fecha: $('#facFecha').value || fmtDate(new Date()),
+      cliente: ($('#facCliente').value||'').trim(),
+      tecnica: $('#facTec').value||'',
+      metodo: $('#facMetodo').value||'',
+      items, subtotal: sub, impuestos: imp, total: tot
+    };
+    if(!f.cliente || !f.tecnica){ alert('Cliente y Técnica son requeridos'); return; }
+
+    App.data.facturas.unshift(f);
+    save(LS_KEYS.FACT, App.data.facturas);
+    renderFacturacion(root);
+  };
+
+  $('#btnLimpiarFac').onclick = ()=>renderFacturacion(root);
+  $('#btnFacPrint').onclick  = ()=>window.print();
+
+  // Filtros
+  const periodo = $('#fFacPeriodo');
+  const desde = $('#fFacDesde');
+  const hasta = $('#fFacHasta');
+  periodo.onchange = ()=>{
+    const isRango = periodo.value==='rango';
+    desde.style.display = isRango?'':'none';
+    hasta.style.display = isRango?'':'none';
+    if(isRango){
+      const r = getRange('mes'); desde.value=r.start; hasta.value=r.end;
+    }
+  };
+  $('#fFacLimpiar').onclick = ()=>renderFacturacion(root);
+  $('#fFacAplicar').onclick = ()=>renderTablaFact();
+
+  $('#expFacCsv').onclick   = ()=>exportTableCSV('#tblFact','facturas.csv');
+  $('#expFacExcel').onclick = ()=>exportTableExcel('#tblFact','facturas.xls');
+  $('#printFac').onclick    = ()=>window.print();
+
+  renderTablaFact();
+
+  function renderTablaFact(){
+    const tTec = $('#fFacTec').value;
+    const per  = periodo.value;
+    let r = {start:null,end:null};
+    if(per==='rango'){ r.start=desde.value; r.end=hasta.value; }
+    else{ r = getRange(per,new Date()); }
+
+    const rows = App.data.facturas
+      .filter(f=>{
+        const okTec = !tTec || tTec==='Todas' || f.tecnica===tTec;
+        const okFe = (!r.start||f.fecha>=r.start) && (!r.end||f.fecha<=r.end);
+        return okTec && okFe;
+      })
+      .sort((a,b)=>a.fecha.localeCompare(b.fecha));
+
+    const tbody = $('#tblFact tbody');
+    tbody.innerHTML = rows.map(f=>`
+      <tr>
+        <td>${f.fecha}</td><td>${f.cliente}</td><td>${f.tecnica}</td><td>${f.metodo}</td>
+        <td>${money(f.subtotal)}</td><td>${money(f.impuestos)}</td><td><b>${money(f.total)}</b></td>
+      </tr>
+    `).join('');
+
+    const totSub = rows.reduce((a,b)=>a+Number(b.subtotal||0),0);
+    const totImp = rows.reduce((a,b)=>a+Number(b.impuestos||0),0);
+    const totTot = rows.reduce((a,b)=>a+Number(b.total||0),0);
+    const t = document.createElement('tr');
+    t.innerHTML = `
+      <td colspan="4" style="text-align:right"><b>Totales</b></td>
+      <td><b>${money(totSub)}</b></td>
+      <td><b>${money(totImp)}</b></td>
+      <td><b>${money(totTot)}</b></td>
+    `;
+    tbody.appendChild(t);
+  }
+}
+/* ============================================================
+   VISTA: VISOR DE CITAS (consolidado + totales por técnica,
+   filtros por período, exportación Excel/CSV e impresión)
+   ============================================================ */
+function renderVisor(root){
+  root.innerHTML = `
+    <div class="card">
+      <h3>Visor de Citas — Consolidado</h3>
+      <div class="toolbar">
+        <select id="vTec">${makeSelectOptions(['Todas',...App.data.techs],'Técnica')}</select>
+        <select id="vPeriodo">
+          <option value="dia">Hoy</option>
+          <option value="semana">Semana</option>
+          <option value="mes" selected>Mes</option>
+          <option value="ano">Año</option>
+          <option value="rango">Rango</option>
+        </select>
+        <input type="date" id="vDesde" style="display:none">
+        <input type="date" id="vHasta" style="display:none">
+        <button class="btn" id="vAplicar">Aplicar</button>
+        <button class="btn ghost" id="vLimpiar">Limpiar</button>
+      </div>
+
+      <div class="toolbar">
+        <button class="btn" id="vCsv">Exportar CSV</button>
+        <button class="btn" id="vXls">Exportar Excel</button>
+        <button class="btn ghost" id="vPrint">Imprimir / PDF</button>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h3 style="margin-top:0">Citas Detalladas</h3>
+          <div class="print-area">
+            <table class="table" id="tblVisorCitas">
+              <thead>
+                <tr>
+                  <th>Fecha</th><th>Hora</th><th>Cliente</th><th>Servicio</th>
+                  <th>Técnica</th><th>Total</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0">Totales por Técnica</h3>
+          <div class="print-area">
+            <table class="table" id="tblVisorTot">
+              <thead>
+                <tr><th>Técnica</th><th>Cantidad</th><th>Total</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <h3 style="margin-top:0">Totales por Día</h3>
+            <div class="print-area">
+              <table class="table" id="tblVisorDia">
+                <thead><tr><th>Fecha</th><th>Citas</th><th>Total</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  `;
+
+  const periodo = $('#vPeriodo');
+  const desde   = $('#vDesde');
+  const hasta   = $('#vHasta');
+
+  periodo.onchange = ()=>{
+    const isRango = periodo.value==='rango';
+    desde.style.display = isRango?'':'none';
+    hasta.style.display = isRango?'':'none';
+    if(isRango){
+      const r = getRange('mes'); desde.value=r.start; hasta.value=r.end;
+    }
+  };
+  $('#vLimpiar').onclick = ()=>renderVisor(root);
+  $('#vAplicar').onclick = ()=>renderTablas();
+
+  $('#vCsv').onclick = ()=>{
+    // Un CSV unificado: primero detalle, luego totales
+    const tmp = document.createElement('div');
+    tmp.innerHTML = `
+      <table id="__tmp1">${$('#tblVisorCitas').innerHTML}</table>
+      <table id="__tmp2">${$('#tblVisorTot').innerHTML}</table>
+      <table id="__tmp3">${$('#tblVisorDia').innerHTML}</table>
+    `;
+    document.body.appendChild(tmp);
+    exportTableCSV('#__tmp1','visor_citas_detalle.csv');
+    exportTableCSV('#__tmp2','visor_totales_tecnica.csv');
+    exportTableCSV('#__tmp3','visor_totales_dia.csv');
+    tmp.remove();
+  };
+  $('#vXls').onclick = ()=>{
+    const tmp = document.createElement('div');
+    tmp.innerHTML = `
+      <table id="__tmp1">${$('#tblVisorCitas').innerHTML}</table>
+      <table id="__tmp2">${$('#tblVisorTot').innerHTML}</table>
+      <table id="__tmp3">${$('#tblVisorDia').innerHTML}</table>
+    `;
+    document.body.appendChild(tmp);
+    exportTableExcel('#__tmp1','visor_citas_detalle.xls');
+    exportTableExcel('#__tmp2','visor_totales_tecnica.xls');
+    exportTableExcel('#__tmp3','visor_totales_dia.xls');
+    tmp.remove();
+  };
+  $('#vPrint').onclick = ()=>window.print();
+
+  renderTablas();
+
+  function renderTablas(){
+    const tTec = $('#vTec').value;
+    const per  = periodo.value;
+    let r = {start:null,end:null};
+    if(per==='rango'){ r.start = desde.value; r.end = hasta.value; }
+    else{ r = getRange(per,new Date()); }
+
+    // Filtrado base
+    const data = App.data.citas
+      .filter(c=>{
+        const okTec = !tTec || tTec==='Todas' || c.tecnica===tTec;
+        const okFe  = (!r.start||c.fecha>=r.start) && (!r.end||c.fecha<=r.end);
+        return okTec && okFe;
+      });
+
+    // Tabla detalle
+    const tbody = $('#tblVisorCitas tbody');
+    tbody.innerHTML = data
+      .sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora))
+      .map(c=>`
+        <tr>
+          <td>${c.fecha}</td><td>${c.hora}</td><td>${c.cliente}</td>
+          <td>${c.servicio}</td><td>${c.tecnica}</td><td>${money(c.total)}</td>
+        </tr>
+      `).join('');
+
+    // Agregar total general al final del detalle
+    const totalDet = data.reduce((a,b)=>a+Number(b.total||0),0);
+    const tDet = document.createElement('tr');
+    tDet.innerHTML = `<td colspan="5" style="text-align:right"><b>Total</b></td><td><b>${money(totalDet)}</b></td>`;
+    tbody.appendChild(tDet);
+
+    // Totales por técnica
+    const byTec = {};
+    data.forEach(c=>{
+      if(!byTec[c.tecnica]) byTec[c.tecnica] = {count:0,total:0};
+      byTec[c.tecnica].count++;
+      byTec[c.tecnica].total += Number(c.total||0);
+    });
+    const tbody2 = $('#tblVisorTot tbody');
+    const rowsTec = Object.entries(byTec)
+      .sort((a,b)=>b[1].total - a[1].total)
+      .map(([tec,agg])=>`<tr><td>${tec}</td><td>${agg.count}</td><td>${money(agg.total)}</td></tr>`)
+      .join('');
+    tbody2.innerHTML = rowsTec || `<tr><td colspan="3">Sin datos</td></tr>`;
+    if(rowsTec){
+      const totCount = Object.values(byTec).reduce((a,b)=>a+b.count,0);
+      const totSum   = Object.values(byTec).reduce((a,b)=>a+b.total,0);
+      const t = document.createElement('tr');
+      t.innerHTML = `<td style="text-align:right"><b>Totales</b></td><td><b>${totCount}</b></td><td><b>${money(totSum)}</b></td>`;
+      tbody2.appendChild(t);
+    }
+
+    // Totales por día
+    const byDay = {};
+    data.forEach(c=>{
+      if(!byDay[c.fecha]) byDay[c.fecha] = {count:0,total:0};
+      byDay[c.fecha].count++;
+      byDay[c.fecha].total += Number(c.total||0);
+    });
+    const tbody3 = $('#tblVisorDia tbody');
+    const rowsDia = Object.entries(byDay)
+      .sort((a,b)=>a[0].localeCompare(b[0]))
+      .map(([day,agg])=>`<tr><td>${day}</td><td>${agg.count}</td><td>${money(agg.total)}</td></tr>`)
+      .join('');
+    tbody3.innerHTML = rowsDia || `<tr><td colspan="3">Sin datos</td></tr>`;
+    if(rowsDia){
+      const totCount = Object.values(byDay).reduce((a,b)=>a+b.count,0);
+      const totSum   = Object.values(byDay).reduce((a,b)=>a+b.total,0);
+      const t = document.createElement('tr');
+      t.innerHTML = `<td style="text-align:right"><b>Totales</b></td><td><b>${totCount}</b></td><td><b>${money(totSum)}</b></td>`;
+      tbody3.appendChild(t);
+    }
+  }
+}
+/* ============================================================
+   VISTA: RENDIMIENTO (gráfica simple canvas sin librerías)
+   Muestra ingresos por mes y por técnica en período seleccionado
+   ============================================================ */
+function renderRendimiento(root){
+  root.innerHTML = `
+    <div class="card">
+      <h3>Rendimiento</h3>
+      <div class="toolbar">
+        <select id="rPeriodo">
+          <option value="mes" selected>Mes actual</option>
+          <option value="ano">Año actual</option>
+          <option value="rango">Rango</option>
+        </select>
+        <input type="date" id="rDesde" style="display:none">
+        <input type="date" id="rHasta" style="display:none">
+        <select id="rAgrupa">
+          <option value="dia">Agrupar por día</option>
+          <option value="mes">Agrupar por mes</option>
+        </select>
+        <button class="btn" id="rAplicar">Aplicar</button>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h3 style="margin-top:0">Ingresos por período</h3>
+          <canvas id="cvIngreso" width="600" height="320" style="width:100%;background:#0f1017;border:1px solid var(--outline);border-radius:10px"></canvas>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">Top Técnicas (ingresos)</h3>
+          <table class="table" id="tblTopTec">
+            <thead><tr><th>Técnica</th><th>Facturas</th><th>Total</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const periodo = $('#rPeriodo');
+  const desde   = $('#rDesde');
+  const hasta   = $('#rHasta');
+  const agrupa  = $('#rAgrupa');
+
+  periodo.onchange = ()=>{
+    const isR = periodo.value==='rango';
+    desde.style.display = isR?'':'none';
+    hasta.style.display = isR?'':'none';
+    if(isR){
+      const r = getRange('mes'); desde.value=r.start; hasta.value=r.end;
+    }
+  };
+  $('#rAplicar').onclick = ()=>redraw();
+
+  redraw();
+
+  function redraw(){
+    // Rango seleccionado
+    let r = {start:null,end:null};
+    if(periodo.value==='rango'){ r.start=desde.value; r.end=hasta.value; }
+    else if(periodo.value==='mes'){ r=getRange('mes', new Date()); }
+    else if(periodo.value==='ano'){ r=getRange('ano', new Date()); }
+
+    // Filtrar facturas por fecha
+    const rows = App.data.facturas
+      .filter(f=>(!r.start||f.fecha>=r.start) && (!r.end||f.fecha<=r.end));
+
+    // Agrupar por día o por mes
+    const map = {};
+    rows.forEach(f=>{
+      let key = f.fecha; // por día
+      if(agrupa.value==='mes') key = f.fecha.slice(0,7); // YYYY-MM
+      if(!map[key]) map[key]=0;
+      map[key]+= Number(f.total||0);
+    });
+
+    const labels = Object.keys(map).sort();
+    const values = labels.map(k=>map[k]);
+
+    drawBarChart('cvIngreso', labels, values);
+
+    // Top técnicas
+    const byTec = {};
+    rows.forEach(f=>{
+      if(!byTec[f.tecnica]) byTec[f.tecnica]={count:0,total:0};
+      byTec[f.tecnica].count++;
+      byTec[f.tecnica].total+=Number(f.total||0);
+    });
+    const sorted = Object.entries(byTec).sort((a,b)=>b[1].total-a[1].total);
+    const tbody = $('#tblTopTec tbody');
+    tbody.innerHTML = sorted.map(([tec,agg])=>`
+      <tr><td>${tec}</td><td>${agg.count}</td><td>${money(agg.total)}</td></tr>
+    `).join('') || `<tr><td colspan="3">Sin datos</td></tr>`;
+  }
+}
+
+/* ===== Mini chart (Canvas 2D) ===== */
+function drawBarChart(canvasId, labels, values){
+  const cv = document.getElementById(canvasId);
+  const ctx = cv.getContext('2d');
+  // clear
+  ctx.clearRect(0,0,cv.width,cv.height);
+
+  // padding
+  const pad = {l:50, r:20, t:20, b:50};
+  const W = cv.width - pad.l - pad.r;
+  const H = cv.height - pad.t - pad.b;
+
+  // scales
+  const maxV = Math.max(10, ...values);
+  const barW = Math.max(10, Math.min(70, Math.floor(W / Math.max(1, values.length) - 8)));
+  const gap  = 8;
+
+  // axes
+  ctx.strokeStyle = '#444';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.l, pad.t);
+  ctx.lineTo(pad.l, pad.t+H);
+  ctx.lineTo(pad.l+W, pad.t+H);
+  ctx.stroke();
+
+  // bars
+  ctx.fillStyle = '#6ee7b7'; // (no se pide evitar color en canvas; si prefieres, puedo usar fillStyle por defecto)
+  labels.forEach((lab, i)=>{
+    const x = pad.l + i*(barW+gap) + gap;
+    const v = values[i];
+    const h = Math.round((v/maxV)* (H-10));
+    const y = pad.t + (H - h);
+    ctx.fillRect(x, y, barW, h);
+  });
+
+  // labels X
+  ctx.fillStyle = '#a7a7b1';
+  ctx.font = '12px sans-serif';
+  labels.forEach((lab,i)=>{
+    const x = pad.l + i*(barW+gap) + gap + barW/2;
+    const y = pad.t + H + 16;
+    ctx.textAlign='center';
+    ctx.fillText(lab, x, y);
+  });
+
+  // values on top
+  ctx.fillStyle = '#ddd';
+  ctx.font = '11px sans-serif';
+  values.forEach((v,i)=>{
+    const x = pad.l + i*(barW+gap) + gap + barW/2;
+    const h = Math.round((v/maxV)* (H-10));
+    const y = pad.t + (H - h) - 6;
+    ctx.textAlign='center';
+    ctx.fillText(money(v), x, y);
+  });
+}
+/* ============================================================
+   VISTA: CONFIGURACIÓN (colores, logo, técnicas, credenciales)
+   ============================================================ */
+function renderConfig(root){
+  const cfg = App.data.config;
+  root.innerHTML = `
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Marca & Visual</h3>
+        <div class="field"><label>Nombre de marca</label><input id="cfgBrand" value="${cfg.brandName}"></div>
+        <div class="field"><label>Subtítulo</label><input id="cfgSub" value="${cfg.brandSub}"></div>
+        <div class="field"><label>Footer</label><input id="cfgFoot" value="${cfg.footerBrand}"></div>
+        <div class="field"><label>Logo (PNG/JPG)</label><input id="cfgLogo" type="file" accept="image/*"></div>
+
+        <div class="grid cols-3">
+          <div class="field"><label>Fondo</label><input type="color" id="cBg" value="${cfg.theme.bg}"></div>
+          <div class="field"><label>Texto</label><input type="color" id="cFg" value="${cfg.theme.fg}"></div>
+          <div class="field"><label>Primario</label><input type="color" id="cP1" value="${cfg.theme.primary}"></div>
+          <div class="field"><label>Primario 2</label><input type="color" id="cP2" value="${cfg.theme.primary2}"></div>
+          <div class="field"><label>Accent</label><input type="color" id="cAc" value="${cfg.theme.accent}"></div>
+          <div class="field"><label>Card</label><input type="color" id="cCard" value="${cfg.theme.card}"></div>
+          <div class="field"><label>Card 2</label><input type="color" id="cCard2" value="${cfg.theme.card2}"></div>
+          <div class="field"><label>Topbar</label><input type="color" id="cTop" value="${cfg.theme.topbar}"></div>
+          <div class="field"><label>Footer</label><input type="color" id="cFoot" value="${cfg.theme.footer}"></div>
+        </div>
+
+        <div class="toolbar">
+          <button class="btn primary" id="btnSaveBrand">Guardar</button>
+          <button class="btn ghost" id="btnResetBrand">Restablecer</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Negocio</h3>
+        <div class="field"><label>Nombre legal</label><input id="bNombre" value="${cfg.business.nombre}"></div>
+        <div class="field"><label>Teléfono</label><input id="bTel" value="${cfg.business.telefono}"></div>
+        <div class="field"><label>Email</label><input id="bEmail" value="${cfg.business.email}"></div>
+        <div class="field"><label>Dirección</label><input id="bDir" value="${cfg.business.direccion}"></div>
+        <div class="field"><label>Website</label><input id="bWeb" value="${cfg.business.website}"></div>
+        <div class="toolbar">
+          <button class="btn primary" id="btnSaveBiz">Guardar negocio</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Técnicas / Empleados</h3>
+        <div class="toolbar">
+          <input id="tecNew" placeholder="Nombre de técnica">
+          <button class="btn" id="tecAdd">Añadir</button>
+        </div>
+        <div id="tecList"></div>
+      </div>
+
+      <div class="card">
+        <h3>Credenciales</h3>
+        <div class="field"><label>Usuario admin</label><input id="credUser" value="${(App.data.users[0]||{}).user||'admin'}"></div>
+        <div class="field"><label>Nueva contraseña</label><input id="credPass" type="password" placeholder="••••••"></div>
+        <div class="toolbar">
+          <button class="btn primary" id="btnSaveCred">Guardar credenciales</button>
+        </div>
+        <div class="hint">La sesión no se mantiene automáticamente por seguridad.</div>
+      </div>
+    </div>
+  `;
+
+  // Render lista de técnicas
+  function drawTechs(){
+    const box = $('#tecList');
+    if(!App.data.techs.length){
+      box.innerHTML = `<div class="hint">No hay técnicas registradas.</div>`;
+      return;
+    }
+    box.innerHTML = App.data.techs.map((t,i)=>`
+      <div class="toolbar" style="justify-content:space-between;border:1px solid var(--outline);padding:8px;border-radius:10px;margin-bottom:6px">
+        <span>${i+1}. ${t}</span>
+        <span>
+          <button class="btn" data-edit="${i}">Renombrar</button>
+          <button class="btn danger" data-del="${i}">Eliminar</button>
+        </span>
+      </div>
+    `).join('');
+
+    // Eventos
+    box.querySelectorAll('[data-del]').forEach(b=>{
+      b.onclick = ()=>{
+        const idx = Number(b.dataset.del);
+        if(confirm(`Eliminar "${App.data.techs[idx]}"?`)){
+          App.data.techs.splice(idx,1);
+          save(LS_KEYS.TECHS, App.data.techs);
+          drawTechs();
+        }
+      };
+    });
+    box.querySelectorAll('[data-edit]').forEach(b=>{
+      b.onclick = ()=>{
+        const idx = Number(b.dataset.edit);
+        const nuevo = prompt('Nuevo nombre:', App.data.techs[idx]);
+        if(nuevo && nuevo.trim()){
+          App.data.techs[idx] = nuevo.trim();
+          save(LS_KEYS.TECHS, App.data.techs);
+          drawTechs();
+        }
+      };
+    });
+  }
+  drawTechs();
+
+  // Añadir técnica
+  $('#tecAdd').onclick = ()=>{
+    const v = ($('#tecNew').value||'').trim();
+    if(!v) return;
+    if(App.data.techs.includes(v)){ alert('Ya existe.'); return; }
+    App.data.techs.push(v);
+    save(LS_KEYS.TECHS, App.data.techs);
+    $('#tecNew').value='';
+    drawTechs();
+  };
+
+  // Guardar marca / tema
+  $('#btnSaveBrand').onclick = ()=>{
+    cfg.brandName = $('#cfgBrand').value || cfg.brandName;
+    cfg.brandSub  = $('#cfgSub').value  || cfg.brandSub;
+    cfg.footerBrand = $('#cfgFoot').value || cfg.footerBrand;
+    cfg.theme.bg = $('#cBg').value;
+    cfg.theme.fg = $('#cFg').value;
+    cfg.theme.primary = $('#cP1').value;
+    cfg.theme.primary2= $('#cP2').value;
+    cfg.theme.accent  = $('#cAc').value;
+    cfg.theme.card    = $('#cCard').value;
+    cfg.theme.card2   = $('#cCard2').value;
+    cfg.theme.topbar  = $('#cTop').value;
+    cfg.theme.footer  = $('#cFoot').value;
+
+    save(LS_KEYS.CONFIG, cfg);
+    applyTheme(cfg.theme);
+    $('#brandName').textContent = cfg.brandName;
+    $('#brandSub').textContent  = cfg.brandSub;
+    $('#footBrand').textContent = cfg.footerBrand;
+    alert('Configuración visual guardada.');
+  };
+  $('#btnResetBrand').onclick = ()=>{
+    if(confirm('Restablecer tema por defecto?')){
+      App.data.config.theme = {...DEFAULT_CONFIG.theme};
+      save(LS_KEYS.CONFIG, App.data.config);
+      applyTheme(App.data.config.theme);
+      renderConfig(root);
+    }
+  };
+
+  // Logo
+  $('#cfgLogo').onchange = (e)=>{
+    const file = e.target.files?.[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      App.data.config.logoDataUrl = String(reader.result||'');
+      save(LS_KEYS.CONFIG, App.data.config);
+      $('#loginLogo').src = App.data.config.logoDataUrl;
+      $('#appLogo').src   = App.data.config.logoDataUrl;
+      alert('Logo actualizado.');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Negocio
+  $('#btnSaveBiz').onclick = ()=>{
+    cfg.business.nombre   = $('#bNombre').value || cfg.business.nombre;
+    cfg.business.telefono = $('#bTel').value    || cfg.business.telefono;
+    cfg.business.email    = $('#bEmail').value  || cfg.business.email;
+    cfg.business.direccion= $('#bDir').value    || cfg.business.direccion;
+    cfg.business.website  = $('#bWeb').value    || cfg.business.website;
+    save(LS_KEYS.CONFIG,cfg);
+    alert('Datos de negocio guardados.');
+  };
+
+  // Credenciales
+  $('#btnSaveCred').onclick = ()=>{
+    const u = ($('#credUser').value||'').trim();
+    const p = ($('#credPass').value||'').trim();
+    if(!u || !p){ alert('Usuario y contraseña requeridos.'); return; }
+    App.data.users = [{user:u, pass:p}];
+    save(LS_KEYS.USERS, App.data.users);
+    alert('Credenciales actualizadas. Vuelve a iniciar sesión si cierras.');
+  };
+}
+/* ============================================================
+   Utilidades finales, protección básica y arranque
+   ============================================================ */
+
+// Protección pseudo-ruta (evita anclas externas romper router)
+window.addEventListener('hashchange', (e)=>{ e.preventDefault(); window.history.pushState({},'',location.pathname); });
+
+// Confirmación al salir si hay cambios — simple (opcional)
+window.addEventListener('beforeunload', (e)=>{
+  // e.preventDefault(); e.returnValue=''; // desactivado para no molestar
+});
+
+// Atajos de teclado (Ctrl+P imprime)
+document.addEventListener('keydown', (e)=>{
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='p'){ e.preventDefault(); window.print(); }
+});
+
+// Arranque: mostrar login con posibles datos
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Si quieres auto-login (no recomendado en prod), comenta showLogin y llama showApp
+  // showApp();
+});
+
+/* ============================================================
+   (Opcional) Registro simple de Service Worker para PWA
+   ============================================================ */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+/* ============================================================
+   FIN DEL SCRIPT UNIFICADO
+   ============================================================ */
+</script>
+</body>
+</html>
