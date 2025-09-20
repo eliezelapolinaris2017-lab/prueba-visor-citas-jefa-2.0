@@ -1402,5 +1402,42 @@ function boot(){
 }
 window.addEventListener('DOMContentLoaded', ()=> boot());
 </script>
+   <!-- BOTÓN FLOTANTE ADMIN (no altera tu UI) -->
+<button id="sp-admin-btn" aria-label="Panel administrativo" style="
+  position:fixed; right:16px; bottom:16px; z-index:999999;
+  border:none; border-radius:999px; padding:12px 16px;
+  background:#22c55e; color:#fff; font-weight:700; box-shadow:0 6px 18px rgba(0,0,0,.35);
+  cursor:pointer;">Admin</button>
+
+<!-- Cargar panel administrativo -->
+<script type="module">
+  import { mountSalonProAdmin } from './salonpro-admin.js';
+
+  // Adaptador de datos: intenta usar tus fuentes reales y hace fallback a localStorage
+  const DataAdapter = {
+    async getRegistros() {
+      // 1) Si ya tienes visor con función pública:
+      if (window.VisorCitas?.getRegistros) {
+        return await window.VisorCitas.getRegistros();
+      }
+      // 2) Si manejas objetos globales en Salón Pro:
+      if (window.SALON_PRO?.facturas || window.SALON_PRO?.citas) {
+        const f = (window.SALON_PRO.facturas || []).map(x => ({...x, tipo:'factura'}));
+        const c = (window.SALON_PRO.citas || []).map(x => ({...x, tipo:'cita'}));
+        return [...f, ...c];
+      }
+      // 3) Fallback a localStorage (claves típicas)
+      const fRaw = localStorage.getItem('salonpro_facturas') || '[]';
+      const cRaw = localStorage.getItem('salonpro_citas') || '[]';
+      const f = JSON.parse(fRaw).map(x => ({...x, tipo:'factura'}));
+      const c = JSON.parse(cRaw).map(x => ({...x, tipo:'cita'}));
+      return [...f, ...c];
+    }
+  };
+
+  document.getElementById('sp-admin-btn')?.addEventListener('click', () => {
+    mountSalonProAdmin({ adapter: DataAdapter });
+  });
+</script>
 </body>
 </html>
